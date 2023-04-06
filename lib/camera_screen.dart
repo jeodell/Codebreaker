@@ -44,14 +44,14 @@ class CameraScreenState extends State<CameraScreen> {
 
   Future<String?> _takePicture() async {
     if (!_controller.value.isInitialized) {
-      print('Controller is not initialized');
+      debugPrint('Controller is not initialized');
       return null;
     }
 
     String? imagePath;
 
     if (_controller.value.isTakingPicture) {
-      print('Processing is in progress...');
+      debugPrint('Processing is in progress...');
       return null;
     }
 
@@ -63,7 +63,7 @@ class CameraScreenState extends State<CameraScreen> {
       // Retrieving the path
       imagePath = file.path;
     } on CameraException catch (e) {
-      print('Camera Exception: $e');
+      debugPrint('Camera Exception: $e');
       return null;
     }
 
@@ -138,7 +138,7 @@ class CameraScreenState extends State<CameraScreen> {
                                       ),
                                     );
                                   } else {
-                                    print('Image path not found!');
+                                    debugPrint('Image path not found!');
                                   }
                                 });
                               },
