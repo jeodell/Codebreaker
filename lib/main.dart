@@ -1,5 +1,5 @@
 import 'package:camera/camera.dart';
-import 'package:codebreaker/camera_screen.dart';
+import 'package:codebreaker/home_page.dart';
 import 'package:flutter/material.dart';
 
 // Global variable for storing the list of cameras available
@@ -21,12 +21,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'Codebreaker',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const CameraScreen(),
+      home: Home(),
     );
   }
 }

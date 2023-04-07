@@ -4,14 +4,14 @@ import 'package:codebreaker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class CameraScreen extends StatefulWidget {
-  const CameraScreen({Key? key}) : super(key: key);
+class Home extends StatefulWidget {
+  const Home({Key? key}) : super(key: key);
 
   @override
-  CameraScreenState createState() => CameraScreenState();
+  HomeState createState() => HomeState();
 }
 
-class CameraScreenState extends State<CameraScreen> {
+class HomeState extends State<Home> {
   late final CameraController _controller;
   bool _takingPicture = false;
 
@@ -75,12 +75,58 @@ class CameraScreenState extends State<CameraScreen> {
     return SafeArea(
       child: Scaffold(
         body: !_takingPicture
-            ? Center(
-                child: TextButton(
-                  child: const Text('Take Picture'),
-                  onPressed: () => setState(() {
-                    _takingPicture = true;
-                  }),
+            ? Container(
+                decoration: BoxDecoration(
+                  // oval gradient
+                  gradient: RadialGradient(
+                    colors: <Color>[
+                      Colors.yellow.shade500,
+                      Colors.yellow.shade700,
+                      Colors.orange.shade400,
+                      Colors.orange.shade700,
+                      Colors.red.shade700,
+                      Colors.pink.shade900,
+                    ],
+                    stops: const <double>[0.0, 0.3, 0.4, 0.65, 0.85, 1.0],
+                    radius: 0.9,
+                    focal: Alignment.center,
+                    focalRadius: 0.25,
+                  ),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Text(
+                        'CODEBREAKER',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontFamily: 'SkyFall Done',
+                        ),
+                      ),
+                      const SizedBox(height: 20.0),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.pink.shade900,
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Take Picture @',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontFamily: 'SkyFall Done',
+                          ),
+                        ),
+                        onPressed: () => setState(() {
+                          _takingPicture = true;
+                        }),
+                      ),
+                    ],
+                  ),
                 ),
               )
             : _controller.value.isInitialized
