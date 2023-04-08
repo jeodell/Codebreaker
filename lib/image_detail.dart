@@ -253,6 +253,7 @@ class DetailScreenState extends State<DetailScreen> {
                                           controller: _scrollController,
                                           thumbVisibility: true,
                                           child: SingleChildScrollView(
+                                            controller: _scrollController,
                                             child: Column(
                                               children: <Widget>[
                                                 ..._listWords!
@@ -315,8 +316,22 @@ class DetailScreenState extends State<DetailScreen> {
                                                             _textEditingController
                                                                 .clear();
                                                           },
+                                                          cursorColor:
+                                                              Colors.pinkAccent,
                                                           decoration:
                                                               const InputDecoration(
+                                                            focusedBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .transparent),
+                                                            ),
+                                                            enabledBorder:
+                                                                UnderlineInputBorder(
+                                                              borderSide: BorderSide(
+                                                                  color: Colors
+                                                                      .transparent),
+                                                            ),
                                                             hintText:
                                                                 'Custom Word',
                                                           ),
@@ -325,6 +340,7 @@ class DetailScreenState extends State<DetailScreen> {
                                                     ],
                                                   ),
                                                 ),
+                                                const SizedBox(height: 64),
                                               ],
                                             ),
                                           ),
