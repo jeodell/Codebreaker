@@ -23,6 +23,8 @@ class DetailScreenState extends State<DetailScreen> {
   Size? _imageSize;
   final List<TextElement> _elements = <TextElement>[];
   List<CodenamesWord>? _listWords;
+  bool _hasGeneratedClues = false;
+  String? _generatedClues;
 
   @override
   void initState() {
@@ -127,18 +129,26 @@ class DetailScreenState extends State<DetailScreen> {
     final String data = jsonEncode(<String, dynamic>{
       'model': 'text-davinci-003',
       'prompt': prompt,
-      'temperature': 0.2,
-      'max_tokens': 64,
+      'temperature': 0.5,
+      'max_tokens': 256,
     });
 
     final http.Response response =
         await http.post(url, headers: headers, body: data);
+    Map<String, dynamic> decoded;
     if (response.statusCode == 200) {
       debugPrint(response.body);
+      decoded = jsonDecode(response.body);
     } else {
       debugPrint('Error: ${response.statusCode}');
       debugPrint('Reason: ${response.reasonPhrase}');
+      return;
     }
+
+    setState(() {
+      _hasGeneratedClues = true;
+      _generatedClues = decoded['choices'][0]['text'].trimLeft();
+    });
   }
 
   @override
@@ -147,78 +157,118 @@ class DetailScreenState extends State<DetailScreen> {
       body: _imageSize != null
           ? Stack(
               children: <Widget>[
-                Container(
-                  width: double.maxFinite,
-                  color: Colors.black,
-                  child: AspectRatio(
-                    aspectRatio: _imageSize!.aspectRatio,
-                    child: Image.file(
-                      File(_imagePath),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Card(
-                    elevation: 8,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 4),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Text(
-                            'Identified Words',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              final List<String> words = <String>[];
-                              for (final CodenamesWord word in _listWords!) {
-                                if (word.selected) {
-                                  words.add(word.word);
-                                }
-                              }
-                              _generateClues(words);
-                            },
-                            child: const Text('Generate Clues'),
-                          ),
-                          if (_listWords != null)
-                            SizedBox(
-                              height: 200,
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  children: _listWords!
-                                      .map((CodenamesWord e) =>
-                                          CheckboxListTile(
-                                            title: Text(e.word),
-                                            dense: true,
-                                            controlAffinity:
-                                                ListTileControlAffinity.leading,
-                                            onChanged: (bool? value) {
-                                              if (value != null) {
-                                                setState(() {
-                                                  e.selected
-                                                      ? e.selected = false
-                                                      : e.selected = true;
-                                                });
-                                              }
-                                            },
-                                            value: e.selected,
-                                          ))
-                                      .toList(),
-                                ),
-                              ),
-                            )
-                          else
-                            Container(),
-                        ],
+                Column(
+                  children: <Widget>[
+                    Container(
+                      alignment: Alignment.center,
+                      height: _imageSize!.height * 0.5,
+                      color: Colors.black,
+                      child: AspectRatio(
+                        aspectRatio: _imageSize!.aspectRatio,
+                        child: Image.file(
+                          File(_imagePath),
+                        ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(4, 16, 4, 0),
+                          child: Column(
+                            children: _hasGeneratedClues
+                                ? <Widget>[
+                                    const Text(
+                                      'Generated Clues',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        backgroundColor: Colors.pink.shade900,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _hasGeneratedClues = false;
+                                        });
+                                      },
+                                      child: const Text('Generate New Clues'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _generatedClues!,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ]
+                                : <Widget>[
+                                    const Text(
+                                      'Identified Words',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        backgroundColor: Colors.pink.shade900,
+                                      ),
+                                      onPressed: () {
+                                        final List<String> words = <String>[];
+                                        for (final CodenamesWord word
+                                            in _listWords!) {
+                                          if (word.selected) {
+                                            words.add(word.word);
+                                          }
+                                        }
+                                        _generateClues(words);
+                                      },
+                                      child: const Text('Generate Clues'),
+                                    ),
+                                    if (_listWords != null)
+                                      Expanded(
+                                        child: SingleChildScrollView(
+                                          child: Column(
+                                            children: _listWords!
+                                                .map((CodenamesWord e) =>
+                                                    CheckboxListTile(
+                                                      title: Text(e.word),
+                                                      dense: true,
+                                                      controlAffinity:
+                                                          ListTileControlAffinity
+                                                              .leading,
+                                                      onChanged: (bool? value) {
+                                                        if (value != null) {
+                                                          setState(() {
+                                                            e.selected
+                                                                ? e.selected =
+                                                                    false
+                                                                : e.selected =
+                                                                    true;
+                                                          });
+                                                        }
+                                                      },
+                                                      value: e.selected,
+                                                    ))
+                                                .toList(),
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Container(),
+                                  ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 32),
@@ -240,7 +290,7 @@ class DetailScreenState extends State<DetailScreen> {
                       Navigator.pop(context);
                     },
                   ),
-                )
+                ),
               ],
             )
           : Container(

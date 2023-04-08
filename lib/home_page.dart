@@ -4,42 +4,35 @@ import 'package:codebreaker/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+class TakePictureScreen extends StatefulWidget {
+  const TakePictureScreen({Key? key, required this.camera}) : super(key: key);
+
+  final CameraDescription camera;
 
   @override
-  HomeState createState() => HomeState();
+  TakePictureScreenState createState() => TakePictureScreenState();
 }
 
-class HomeState extends State<Home> {
-  late final CameraController _controller;
+class TakePictureScreenState extends State<TakePictureScreen> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
   bool _takingPicture = false;
 
   @override
   void initState() {
-    _initializeCamera();
     super.initState();
+    _controller = CameraController(
+      widget.camera,
+      ResolutionPreset.medium,
+    );
+
+    _initializeControllerFuture = _controller.initialize();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _initializeCamera() async {
-    final CameraController cameraController = CameraController(
-      cameras[0],
-      ResolutionPreset.high,
-    );
-    _controller = cameraController;
-
-    _controller.initialize().then((_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {});
-    });
   }
 
   Future<String?> _takePicture() async {
@@ -74,132 +67,152 @@ class HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: !_takingPicture
-            ? Container(
-                decoration: BoxDecoration(
-                  // oval gradient
-                  gradient: RadialGradient(
-                    colors: <Color>[
-                      Colors.yellow.shade500,
-                      Colors.yellow.shade700,
-                      Colors.orange.shade400,
-                      Colors.orange.shade700,
-                      Colors.red.shade700,
-                      Colors.pink.shade900,
-                    ],
-                    stops: const <double>[0.0, 0.3, 0.4, 0.65, 0.85, 1.0],
-                    radius: 0.9,
-                    focal: Alignment.center,
-                    focalRadius: 0.25,
-                  ),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      const Text(
-                        'CODEBREAKER',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontFamily: 'SkyFall Done',
+        // You must wait until the controller is initialized before displaying the
+        // camera preview. Use a FutureBuilder to display a loading spinner until the
+        // controller has finished initializing.
+        body: FutureBuilder<void>(
+          future: _initializeControllerFuture,
+          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              // If the Future is complete, display the preview.
+              return !_takingPicture
+                  ? Container(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: <Color>[
+                            Colors.yellow.shade500,
+                            Colors.yellow.shade700,
+                            Colors.orange.shade400,
+                            Colors.orange.shade700,
+                            Colors.red.shade700,
+                            Colors.pink.shade900,
+                          ],
+                          stops: const <double>[0.0, 0.3, 0.4, 0.65, 0.85, 1.0],
+                          radius: 0.9,
+                          focal: Alignment.center,
+                          focalRadius: 0.25,
                         ),
                       ),
-                      const SizedBox(height: 20.0),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.pink.shade900,
-                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            const Text(
+                              'CODEBREAKER',
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontFamily: 'SkyFall Done',
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                backgroundColor: Colors.pink.shade900,
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 16, 24, 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              child: const Text(
+                                'Tap To Get Clues',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontFamily: 'SkyFall Done',
+                                ),
+                              ),
+                              onPressed: () => setState(() {
+                                _takingPicture = true;
+                              }),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Take Picture @',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontFamily: 'SkyFall Done',
-                          ),
-                        ),
-                        onPressed: () => setState(() {
-                          _takingPicture = true;
-                        }),
                       ),
-                    ],
-                  ),
+                    )
+                  : GestureDetector(
+                      onHorizontalDragUpdate: (DragUpdateDetails details) {
+                        const int sensitivity = 16;
+                        if (details.delta.dx > sensitivity) {
+                          setState(() {
+                            _takingPicture = false;
+                          });
+                        }
+                      },
+                      child: Stack(
+                        children: <Widget>[
+                          CameraPreview(_controller),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 32,
+                              shadows: <BoxShadow>[
+                                BoxShadow(
+                                  color: Colors.black87,
+                                  blurStyle: BlurStyle.outer,
+                                  blurRadius: 8,
+                                  offset: Offset(3, 3),
+                                ),
+                              ],
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _takingPicture = false;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+            } else {
+              // Otherwise, display a loading indicator.
+              return const Center(child: CircularProgressIndicator());
+            }
+          },
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: _takingPicture
+            ? FloatingActionButton(
+                backgroundColor: Colors.pink.shade900,
+                onPressed: () async {
+                  try {
+                    await _initializeControllerFuture;
+
+                    // Turning off the camera flash
+                    _controller.setFlashMode(FlashMode.off);
+
+                    // Attempt to take a picture and get the file `image`
+                    // where it was saved.
+                    final XFile image = await _controller.takePicture();
+
+                    if (!mounted) {
+                      return;
+                    }
+
+                    // If the picture was taken, display it on a new screen.
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (BuildContext context) => DetailScreen(
+                          // Pass the automatically generated path to
+                          // the DisplayPictureScreen widget.
+                          imagePath: image.path,
+                        ),
+                      ),
+                    );
+                  } catch (e) {
+                    debugPrint(e.toString());
+                  }
+                },
+                shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(16))),
+                child: const Icon(
+                  Icons.camera_alt,
+                  size: 24,
+                  color: Colors.white,
                 ),
               )
-            : _controller.value.isInitialized
-                ? GestureDetector(
-                    onHorizontalDragUpdate: (DragUpdateDetails details) {
-                      const int sensitivity = 16;
-                      if (details.delta.dx > sensitivity) {
-                        setState(() {
-                          _takingPicture = false;
-                        });
-                      }
-                    },
-                    child: Stack(
-                      children: <Widget>[
-                        CameraPreview(_controller),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.white,
-                            size: 32,
-                            shadows: <BoxShadow>[
-                              BoxShadow(
-                                color: Colors.black87,
-                                blurStyle: BlurStyle.outer,
-                                blurRadius: 8,
-                                offset: Offset(3, 3),
-                              ),
-                            ],
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _takingPicture = false;
-                            });
-                          },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Container(
-                            alignment: Alignment.bottomCenter,
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.camera),
-                              label: const Text('Click'),
-                              onPressed: () async {
-                                // If the returned path is not null, navigate
-                                // to the DetailScreen
-                                await _takePicture().then((String? path) {
-                                  if (path != null) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute<dynamic>(
-                                        builder: (BuildContext context) =>
-                                            DetailScreen(
-                                          imagePath: path,
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    debugPrint('Image path not found!');
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  )
-                : Container(
-                    color: Colors.black,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+            : null,
       ),
     );
   }

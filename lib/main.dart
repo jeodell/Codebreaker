@@ -1,29 +1,28 @@
 import 'package:camera/camera.dart';
 import 'package:codebreaker/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 // Global variable for storing the list of cameras available
 List<CameraDescription> cameras = <CameraDescription>[];
 
 Future<void> main() async {
-  // Fetch the available cameras before initializing the app
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
-    cameras = await availableCameras();
-  } on CameraException catch (e) {
-    debugPrint('CameraError: ${e.description}');
-  }
-  runApp(const MyApp());
-}
+  WidgetsFlutterBinding.ensureInitialized();
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final List<CameraDescription> cameras = await availableCameras();
+  final CameraDescription firstCamera = cameras.first;
 
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
+  runApp(
+    MaterialApp(
+      theme: ThemeData.dark(),
       title: 'Codebreaker',
-      home: Home(),
-    );
-  }
+      home: TakePictureScreen(
+        camera: firstCamera,
+      ),
+    ),
+  );
 }
