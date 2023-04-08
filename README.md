@@ -1,3 +1,3 @@
 # codebreaker
 
-Flutter app for playing codenames.
+Flutter app for using GPT to generate clues for Codenames.
