@@ -18,10 +18,12 @@ class DetailScreen extends StatefulWidget {
 }
 
 class DetailScreenState extends State<DetailScreen> {
-  late final String _imagePath;
   late final TextRecognizer _textRecognizer;
-  Size? _imageSize;
+  late final TextEditingController _textEditingController;
+  late final ScrollController _scrollController;
+  late final String _imagePath;
   final List<TextElement> _elements = <TextElement>[];
+  Size? _imageSize;
   List<CodenamesWord>? _listWords;
   bool _hasGeneratedClues = false;
   String? _generatedClues;
@@ -30,6 +32,8 @@ class DetailScreenState extends State<DetailScreen> {
   void initState() {
     _imagePath = widget.imagePath;
     _textRecognizer = TextRecognizer();
+    _textEditingController = TextEditingController();
+    _scrollController = ScrollController();
     _recognizeWords();
     super.initState();
   }
@@ -37,6 +41,8 @@ class DetailScreenState extends State<DetailScreen> {
   @override
   void dispose() {
     _textRecognizer.close();
+    _textEditingController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -151,9 +157,18 @@ class DetailScreenState extends State<DetailScreen> {
     });
   }
 
+  void _addWordToList(String word) {
+    if (_listWords != null && word != '') {
+      setState(() {
+        _listWords!.add(CodenamesWord(word.toUpperCase(), true));
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: _imageSize != null
           ? Stack(
               children: <Widget>[
@@ -161,7 +176,7 @@ class DetailScreenState extends State<DetailScreen> {
                   children: <Widget>[
                     Container(
                       alignment: Alignment.center,
-                      height: _imageSize!.height * 0.5,
+                      height: _imageSize!.height * 0.25,
                       color: Colors.black,
                       child: AspectRatio(
                         aspectRatio: _imageSize!.aspectRatio,
@@ -222,10 +237,10 @@ class DetailScreenState extends State<DetailScreen> {
                                       ),
                                       onPressed: () {
                                         final List<String> words = <String>[];
-                                        for (final CodenamesWord word
+                                        for (final CodenamesWord codenamesWord
                                             in _listWords!) {
-                                          if (word.selected) {
-                                            words.add(word.word);
+                                          if (codenamesWord.selected) {
+                                            words.add(codenamesWord.word);
                                           }
                                         }
                                         _generateClues(words);
@@ -234,30 +249,84 @@ class DetailScreenState extends State<DetailScreen> {
                                     ),
                                     if (_listWords != null)
                                       Expanded(
-                                        child: SingleChildScrollView(
-                                          child: Column(
-                                            children: _listWords!
-                                                .map((CodenamesWord e) =>
-                                                    CheckboxListTile(
-                                                      title: Text(e.word),
-                                                      dense: true,
-                                                      controlAffinity:
-                                                          ListTileControlAffinity
-                                                              .leading,
-                                                      onChanged: (bool? value) {
-                                                        if (value != null) {
-                                                          setState(() {
-                                                            e.selected
-                                                                ? e.selected =
-                                                                    false
-                                                                : e.selected =
-                                                                    true;
-                                                          });
-                                                        }
-                                                      },
-                                                      value: e.selected,
-                                                    ))
-                                                .toList(),
+                                        child: Scrollbar(
+                                          controller: _scrollController,
+                                          thumbVisibility: true,
+                                          child: SingleChildScrollView(
+                                            child: Column(
+                                              children: <Widget>[
+                                                ..._listWords!
+                                                    .map((CodenamesWord
+                                                            codenamesWord) =>
+                                                        CheckboxListTile(
+                                                          title: Text(
+                                                              codenamesWord
+                                                                  .word),
+                                                          dense: true,
+                                                          controlAffinity:
+                                                              ListTileControlAffinity
+                                                                  .leading,
+                                                          onChanged:
+                                                              (bool? value) {
+                                                            if (value != null) {
+                                                              setState(() {
+                                                                codenamesWord
+                                                                        .selected
+                                                                    ? codenamesWord
+                                                                            .selected =
+                                                                        false
+                                                                    : codenamesWord
+                                                                            .selected =
+                                                                        true;
+                                                              });
+                                                            }
+                                                          },
+                                                          value: codenamesWord
+                                                              .selected,
+                                                        ))
+                                                    .toList(),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                          .symmetric(
+                                                      horizontal: 12),
+                                                  height: 40.0,
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors.grey),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            5.0),
+                                                  ),
+                                                  child: Row(
+                                                    children: <Widget>[
+                                                      Checkbox(
+                                                        value: false,
+                                                        onChanged:
+                                                            (bool? value) {},
+                                                      ),
+                                                      Expanded(
+                                                        child: TextField(
+                                                          controller:
+                                                              _textEditingController,
+                                                          onSubmitted:
+                                                              (String value) {
+                                                            _addWordToList(
+                                                                value);
+                                                            _textEditingController
+                                                                .clear();
+                                                          },
+                                                          decoration:
+                                                              const InputDecoration(
+                                                            hintText:
+                                                                'Custom Word',
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       )
