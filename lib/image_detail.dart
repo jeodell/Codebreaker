@@ -136,7 +136,7 @@ class DetailScreenState extends State<DetailScreen> {
     final String data = jsonEncode(<String, dynamic>{
       'model': 'text-davinci-003',
       'prompt': prompt,
-      'temperature': 1.5,
+      'temperature': 1,
       'max_tokens': 1024,
     });
 
