@@ -18,7 +18,10 @@ Future<void> main() async {
 
   runApp(
     MaterialApp(
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark().copyWith(
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+            primary: Colors.pink.shade900, secondary: Colors.pinkAccent),
+      ),
       title: 'Codebreaker',
       home: TakePictureScreen(
         camera: firstCamera,

@@ -116,7 +116,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                                 ),
                               ),
                               child: const Text(
-                                'Tap To Get Clues',
+                                'Get Clues',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontFamily: 'SkyFall Done',

@@ -26,6 +26,7 @@ class DetailScreenState extends State<DetailScreen> {
   Size? _imageSize;
   List<CodenamesWord>? _listWords;
   bool _hasGeneratedClues = false;
+  bool _isFetchingClues = false;
   String? _generatedClues;
 
   @override
@@ -135,8 +136,8 @@ class DetailScreenState extends State<DetailScreen> {
     final String data = jsonEncode(<String, dynamic>{
       'model': 'text-davinci-003',
       'prompt': prompt,
-      'temperature': 0.5,
-      'max_tokens': 256,
+      'temperature': 1.5,
+      'max_tokens': 1024,
     });
 
     final http.Response response =
@@ -152,6 +153,7 @@ class DetailScreenState extends State<DetailScreen> {
     }
 
     setState(() {
+      _isFetchingClues = false;
       _hasGeneratedClues = true;
       _generatedClues = decoded['choices'][0]['text'].trimLeft();
     });
@@ -191,164 +193,186 @@ class DetailScreenState extends State<DetailScreen> {
                         child: Container(
                           padding: const EdgeInsets.fromLTRB(4, 16, 4, 0),
                           child: Column(
-                            children: _hasGeneratedClues
+                            children: _isFetchingClues
                                 ? <Widget>[
-                                    const Text(
-                                      'Generated Clues',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        backgroundColor: Colors.pink.shade900,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _hasGeneratedClues = false;
-                                        });
-                                      },
-                                      child: const Text('Generate New Clues'),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _generatedClues!,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                      ),
-                                    ),
+                                    const Center(
+                                      child: CircularProgressIndicator(),
+                                    )
                                   ]
-                                : <Widget>[
-                                    const Text(
-                                      'Identified Words',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        backgroundColor: Colors.pink.shade900,
-                                      ),
-                                      onPressed: () {
-                                        final List<String> words = <String>[];
-                                        for (final CodenamesWord codenamesWord
-                                            in _listWords!) {
-                                          if (codenamesWord.selected) {
-                                            words.add(codenamesWord.word);
-                                          }
-                                        }
-                                        _generateClues(words);
-                                      },
-                                      child: const Text('Generate Clues'),
-                                    ),
-                                    if (_listWords != null)
-                                      Expanded(
-                                        child: Scrollbar(
-                                          controller: _scrollController,
-                                          thumbVisibility: true,
-                                          child: SingleChildScrollView(
-                                            controller: _scrollController,
-                                            child: Column(
-                                              children: <Widget>[
-                                                ..._listWords!
-                                                    .map((CodenamesWord
-                                                            codenamesWord) =>
-                                                        CheckboxListTile(
-                                                          title: Text(
-                                                              codenamesWord
-                                                                  .word),
-                                                          dense: true,
-                                                          controlAffinity:
-                                                              ListTileControlAffinity
-                                                                  .leading,
-                                                          onChanged:
-                                                              (bool? value) {
-                                                            if (value != null) {
-                                                              setState(() {
-                                                                codenamesWord
-                                                                        .selected
-                                                                    ? codenamesWord
-                                                                            .selected =
-                                                                        false
-                                                                    : codenamesWord
-                                                                            .selected =
-                                                                        true;
-                                                              });
-                                                            }
-                                                          },
-                                                          value: codenamesWord
-                                                              .selected,
-                                                        ))
-                                                    .toList(),
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                          .symmetric(
-                                                      horizontal: 12),
-                                                  height: 40.0,
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(
-                                                        color: Colors.grey),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            5.0),
-                                                  ),
-                                                  child: Row(
-                                                    children: <Widget>[
-                                                      Checkbox(
-                                                        value: false,
-                                                        onChanged:
-                                                            (bool? value) {},
-                                                      ),
-                                                      Expanded(
-                                                        child: TextField(
-                                                          controller:
-                                                              _textEditingController,
-                                                          onSubmitted:
-                                                              (String value) {
-                                                            _addWordToList(
-                                                                value);
-                                                            _textEditingController
-                                                                .clear();
-                                                          },
-                                                          cursorColor:
-                                                              Colors.pinkAccent,
-                                                          decoration:
-                                                              const InputDecoration(
-                                                            focusedBorder:
-                                                                UnderlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  color: Colors
-                                                                      .transparent),
-                                                            ),
-                                                            enabledBorder:
-                                                                UnderlineInputBorder(
-                                                              borderSide: BorderSide(
-                                                                  color: Colors
-                                                                      .transparent),
-                                                            ),
-                                                            hintText:
-                                                                'Custom Word',
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 64),
-                                              ],
-                                            ),
+                                : _hasGeneratedClues
+                                    ? <Widget>[
+                                        const Text(
+                                          'Generated Clues',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                      )
-                                    else
-                                      Container(),
-                                  ],
+                                        const SizedBox(height: 8),
+                                        TextButton(
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            backgroundColor:
+                                                Colors.pink.shade900,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _hasGeneratedClues = false;
+                                            });
+                                          },
+                                          child:
+                                              const Text('Generate New Clues'),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          _generatedClues!,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ]
+                                    : <Widget>[
+                                        const Text(
+                                          'Identified Words',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextButton(
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            backgroundColor:
+                                                Colors.pink.shade900,
+                                          ),
+                                          onPressed: () {
+                                            final List<String> words =
+                                                <String>[];
+                                            for (final CodenamesWord codenamesWord
+                                                in _listWords!) {
+                                              if (codenamesWord.selected) {
+                                                words.add(codenamesWord.word);
+                                              }
+                                            }
+                                            setState(() {
+                                              _isFetchingClues = true;
+                                            });
+                                            _generateClues(words);
+                                          },
+                                          child: const Text('Generate Clues'),
+                                        ),
+                                        if (_listWords != null)
+                                          Expanded(
+                                            child: Scrollbar(
+                                              controller: _scrollController,
+                                              thumbVisibility: true,
+                                              child: SingleChildScrollView(
+                                                controller: _scrollController,
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    ..._listWords!
+                                                        .map((CodenamesWord
+                                                                codenamesWord) =>
+                                                            CheckboxListTile(
+                                                              title: Text(
+                                                                codenamesWord
+                                                                    .word,
+                                                              ),
+                                                              activeColor:
+                                                                  Colors.pink
+                                                                      .shade900,
+                                                              checkColor:
+                                                                  Colors.white,
+                                                              dense: true,
+                                                              controlAffinity:
+                                                                  ListTileControlAffinity
+                                                                      .leading,
+                                                              onChanged: (bool?
+                                                                  value) {
+                                                                if (value !=
+                                                                    null) {
+                                                                  setState(() {
+                                                                    codenamesWord
+                                                                            .selected
+                                                                        ? codenamesWord.selected =
+                                                                            false
+                                                                        : codenamesWord.selected =
+                                                                            true;
+                                                                  });
+                                                                }
+                                                              },
+                                                              value:
+                                                                  codenamesWord
+                                                                      .selected,
+                                                            ))
+                                                        .toList(),
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                              .symmetric(
+                                                          horizontal: 12),
+                                                      height: 40.0,
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors.grey),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(5.0),
+                                                      ),
+                                                      child: Row(
+                                                        children: <Widget>[
+                                                          Checkbox(
+                                                            value: false,
+                                                            onChanged: (bool?
+                                                                value) {},
+                                                          ),
+                                                          Expanded(
+                                                            child: TextField(
+                                                              controller:
+                                                                  _textEditingController,
+                                                              onSubmitted:
+                                                                  (String
+                                                                      value) {
+                                                                _addWordToList(
+                                                                    value);
+                                                                _textEditingController
+                                                                    .clear();
+                                                              },
+                                                              cursorColor: Colors
+                                                                  .pinkAccent,
+                                                              decoration:
+                                                                  const InputDecoration(
+                                                                focusedBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.transparent),
+                                                                ),
+                                                                enabledBorder:
+                                                                    UnderlineInputBorder(
+                                                                  borderSide:
+                                                                      BorderSide(
+                                                                          color:
+                                                                              Colors.transparent),
+                                                                ),
+                                                                hintText:
+                                                                    'Custom Word',
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 64),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                        else
+                                          Container(),
+                                      ],
                           ),
                         ),
                       ),
